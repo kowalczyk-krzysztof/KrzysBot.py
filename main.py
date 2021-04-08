@@ -1,5 +1,4 @@
 # Discord
-import requests
 import discord
 from discord.ext import commands
 # OS
