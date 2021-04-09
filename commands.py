@@ -107,7 +107,7 @@ async def _quote(context, *author):
                 f'{result[random_quote]["quote"]}'), inline=False)
 
             await context.send(embed=embed)
-# Command below uses simpleeval (https://github.com/danthedeckie/simpleeval). Although it seems safe, there's always risk, just like with any form of eval(), although it uses ast.literal_eval
+
 # Simple calculator, equation is a string like "2+2". Now I don't really know how to handle parsing something like "2+2-3" so I'm just returning a message if that happens. One solution could be to use eval() but eval = evil so I should avoid using it. EDIT: Turns out simpleeval library exists and does exactly what I want. Leaving the old code below for future if so I can laugh at myself.
 # @bot.command()
 # async def calc(context, equation):
@@ -148,6 +148,7 @@ async def _quote(context, *author):
 #         await context.send(f'**Result:** ```{result}```')
 
 
+# Command below uses simpleeval (https://github.com/danthedeckie/simpleeval). Although it seems safe, there's always risk, just like with any form of eval(), although it uses ast.literal_eval
 # Simple calculator. First whitespaces are removed from user_input and the result is assigned to variable "initial_equation". This is done so input like "2+2 - 2" becomes "2+2-2".
 # Then "^" in initial_equation is replaced with "**" and "," is replaced with ".'. The result is assigned to variable equation. This is done because most Discord users are used to using "^" for power but Python uses "**" and some users prefer to use "," for decimals.
 # Then check if equation has any valid_operators (this takes care of empty check too).
