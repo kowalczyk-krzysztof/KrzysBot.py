@@ -1,6 +1,8 @@
 # Discord
 import discord
 from discord.ext import commands
+from discord.embeds import Embed
+from discord.colour import Colour
 # OS
 import os
 # Dotenv
@@ -13,14 +15,27 @@ from quote import quote
 load_dotenv(dotenv_path='config.env')
 AUTH_TOKEN = os.environ.get('AUTH_TOKEN')
 
+
 client = commands.Bot(command_prefix='.')
+background = Colour.dark_gold()
 
 # List of commands - need to use an alias coz commands is reserved
 
 
 @client.command(aliases=['commands'])
 async def _commands(context):
-    await context.send('COMMAND LIST:\n\n.compatibility - shows how compatibile you are with other user\n.temple - link to templeOSRS profile')
+    embed = Embed(
+        title="Command List",
+        colour=background
+    )
+    embed.add_field(name='.compatibility',
+                    value='Example: ```.compatibility Romeo Juliet```\nCheck how compatibile two users are', inline=False)
+    embed.add_field(name='.quote',
+                    value='Example: ```.quote Albert Einstein```\nGet a random quote from author of your choice', inline=False)
+    embed.add_field(name='.temple',
+                    value='Example: ```.temple zezima```\nGet a link to TempleOSRS profile', inline=False)
+
+    await context.send(embed=embed)
 
 # User compatibility
 
@@ -45,36 +60,48 @@ async def temple(context, value):
 # *author is how I spread arguments in Python
 async def _quote(context, *author):
     # " ".join is how I join items in a list
-    searchTerm = " ".join(author)
-
-    searchTermFormatted = ",".join(author).replace(',', " ")
+    search_term = " ".join(author)
+    # Empty string check
+    if "".__eq__(search_term):
+        return await context.send('Please provide an author')
 
     # Result is a list of dictionaries with keys "author", "book", "quote"
-    result = quote(searchTerm)
+    result = quote(search_term)
     # Strips whitespace and dots
 
-    def stringStripper(inputString):
-        return inputString.upper().replace(
+    def string_stripper(input_string):
+        return input_string.upper().replace(
             " ", "").replace(".", "")
 
     if result == None:
-        await context.send(f'Author with name **{searchTermFormatted}** not found')
+        await context.send(f'Author with name **{search_term}** not found')
     else:
         # INDEXES HAS TO BE OUTSIDE THE LOOP!!!!
         indexes = []
-        strippedSearchTerm = stringStripper(searchTerm)
+        stripped_search_term = string_stripper(search_term)
         for dict_item in result:
 
-            strippedAuthors = stringStripper(dict_item["author"])
+            stripped_authors = string_stripper(dict_item["author"])
 
-            if strippedSearchTerm in strippedAuthors:
+            if stripped_search_term in stripped_authors:
                 indexes.append(result.index(dict_item))
 
         if len(indexes) == 0:
-            await context.send(f'Author with name **{searchTermFormatted}** not found')
+            await context.send(f'Author with name **{search_term}** not found')
         else:
-            randomQuote = random.choice(indexes)
-            await context.send(f'**Author**: {result[randomQuote]["author"]}\n**Quote**: {result[randomQuote]["quote"]}')
+            random_quote = random.choice(indexes)
+
+            embed = Embed(
+                title="Random Quote",
+                colour=background
+            )
+            embed.add_field(name="Author:", value=(
+                f'{result[random_quote]["author"]}'), inline=False)
+
+            embed.add_field(name="Quote:", value=(
+                f'{result[random_quote]["quote"]}'), inline=False)
+
+            await context.send(embed=embed)
 
 
 # Connecting
