@@ -9,14 +9,14 @@ import random
 from quote import quote
 # Utils
 from utils import empty_check, string_stripper
-bot = commands.Bot(command_prefix='.')
+bot = commands.Bot(command_prefix='.', help_command=None)
 
 # Bot variables
 
 background = Colour.dark_gold()
 
 
-@bot.command(aliases=['commands'])
+@bot.command(aliases=['commands', 'help'])
 async def _commands(context):
 
     embed = Embed(
@@ -93,3 +93,44 @@ async def _quote(context, *author):
                 f'{result[random_quote]["quote"]}'), inline=False)
 
             await context.send(embed=embed)
+
+# Simple calculator, equation is a string like "2+2". Now I don't really know how to handle parsing something like "2+2-3" so I'm just returning a message if that happens. One solution could be to use eval() but eval = evil so I should avoid using it.
+
+
+@bot.command()
+async def calc(context, equation):
+
+    async def equation_splitter(equation, operator):
+        y = equation.split(operator)
+        if len(y) > 2 or y[1].isnumeric() == False:
+            return await context.send("Fuck off this is a simple calculator")
+        else:
+            return y
+
+    if equation.isupper() or equation.islower():
+        return await context.send("Invalid input")
+    elif '+' in equation:
+        y = await equation_splitter(equation, '+')
+        result = float(y[0]) + float(y[1])
+    elif '-' in equation:
+        y = await equation_splitter(equation, '-')
+        result = float(y[0]) - float(y[1])
+    elif '*' in equation:
+        y = await equation_splitter(equation, '*')
+        result = float(y[0]) * float(y[1])
+    elif '/' in equation:
+        y = await equation_splitter(equation, '/')
+        if y[1] == '0':
+            return await context.send("You can't divide by 0")
+        else:
+            result = float(y[0]) / float(y[1])
+    elif '^' in equation:
+        y = await equation_splitter(equation, '^')
+        result = float(y[0])**float(y[1])
+    else:
+        return await context.send("Invalid input")
+
+    if result.is_integer():
+        await context.send(f'**Result:** ```{int(result)}```')
+    else:
+        await context.send(f'**Result:** ```{result}```')
