@@ -16,6 +16,8 @@ from simpleeval import simple_eval
 bot = commands.Bot(command_prefix='.', help_command=None)
 background = Colour.dark_gold()
 
+# List of commands
+
 
 @bot.command(aliases=['commands', 'help'])
 async def _commands(context):
@@ -51,11 +53,19 @@ async def compatibility(context, name1, name2):
 async def temple(context, value):
     await context.send(f'https://templeosrs.com/player/overview.php?player={value}')
 
-# Random quote
+# Get a random quote using quote pip library.
+# First, join user input (author) and assing it to variable search_term, so "Albert Einstein" becomes "AlbertEinstein".
+# Then check if search_term is empty (if True, return a msg).
+# Then use quote method to find quotes and assign them to a variable result. The result will be a list of dictioanries with fields "author", "book", "quote". Quote method search if any of those fields contains search_term.
+# If result == None, return a msg.
+# Else pass search term to string_stripper() and assign it to variable stripperd_search_term (this makes the string uppercase and removes all whitespace and ",").
+# Then do the same for every key "author" in dictionaries in result and assign it to stripepd_authors variable and check if stripped_authors contains stripped_search term. If true, append the index of that dictionary to a list indexes.
+# If indexes is empty (so there was no author that is equal to search term) return a msg.
+# Else pick a random number from indexes and assign it to random quote variable.
+# Return result[random_quote] to user as an Embed with fields "Author" (result[random_quote]["author"] as value) and "Quote" (result[random_quote]["quote"] as value)
 
 
 @bot.command(aliases=['quote'])
-# Logic: Join user input then fetch quotes containing user input. Concatenate user input into uppercase, splitting whitespaces and dots. Do the same for each dict_item["author"] in result. Then if concatenated dict_item["author"] contains concatenated user input, append it's index to a list. Then use random.choice() to pick one number from that list and return result[randomIndex]["quote"]
 # *author is how I spread arguments in Python
 async def _quote(context, *author):
     # " ".join is how I join items in a list
@@ -137,27 +147,43 @@ async def _quote(context, *author):
 #         await context.send(f'**Result:** ```{result}```')
 
 
-# Simple calculator. First whitespaces are removed, then a check is performed if user_input is empty then if it has any letters in it (if True, return a msg), then a check for "^" symbol is performed - often people use ^ for power but in Python you need to use ** so I had to make a check for that. Now, I don't want to return results like "4.0" so I'm checking whether result is an integer or not and sending a message based on that.
+# Simple calculator. First whitespaces are removed and the result is assigned to variable "equation". This is done so input like "2+2 - 2" becomes "2+2-2".
+# Then check if equation has any valid_operators (this takes care of empty check too).
+# Then check if any of valid_operators is last index of equation (to prevent doing something like ".calc 2+").
+# Then check if equation has any letters (by checking if there's any uppercase or lowercase in it).
+# Then check if equation has "," (some users like to use "," instead of ".")
+# If any of above checks fails, return a msg "Invalid input".
+# Else check for "^" symbol in equation (often people use "^" for power but in Python you need to use "**" so I had to make a check for that). if true, return msg "Syntax Error"
+# Then pass equation to simple_eval function - this is similar to .eval() but it doesn't have any of the risks eval has.
+# Assign the result of simple_eval as a float to variable result.
+# If result is an integer, then return it as an integer, so I don't send values like "4.0" to the user.
+# If result is a float then just send it as it is.
 @bot.command()
 async def calc(context, *user_input):
 
     equation = " ".join(user_input)
 
-    if equation == "":
-        return await context.send("You can't calculate nothing")
+    valid_operators = ["+", "-", "/", "*", "%", "**"]
+    # operator_check is how I check if a string contains any element from a list, it will also return false if the iterable is empty, so this covers empty check too
+    operator_check = any(operator in equation for operator in valid_operators)
+    # checks if arithmetic operator is last element in equation, to prevent doing something like ".calc 2+"
 
-    valid_power_symbol = '**'
-    invalid_power_symbol = '^'
+    def last_element(equation: str):
+        for operator in valid_operators:
+            if operator == equation[-1]:
+                return True
 
-    if equation.isupper() or equation.islower():
+    if not operator_check or last_element(equation) or equation.isupper() or equation.islower() or ',' in equation:
         return await context.send("Invalid input")
 
     elif "^" in equation:
+        valid_power_symbol = '**'
+        invalid_power_symbol = '^'
         return await context.send(f'**Syntax error**: To use power, use **{valid_power_symbol}**  instead of **{invalid_power_symbol}**')
 
     else:
         result = float(simple_eval(equation))
         if result.is_integer():
-            await context.send(f'**Input**: ```{equation}```**Result:** ```{int(result)}```')
+            await context.send(f'**Input:** ```fix\n{equation}```**Result:** ```fix\n{int(result)}```')
         else:
-            await context.send(f'**Input**: ```{equation}```**Result:** ```{result}```')
+            await context.send(f'**Input:** ```fix\n{equation}```**Result:** ```fix\n{result}```')
