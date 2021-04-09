@@ -30,6 +30,8 @@ async def _commands(context):
                     value='Example: ```.quote Albert Einstein```\nGet a random quote from author of your choice', inline=False)
     embed.add_field(name='.temple',
                     value='Example: ```.temple zezima```\nGet a link to TempleOSRS profile', inline=False)
+    embed.add_field(name='.calc',
+                    value='Example: ```.calc (10*5) + 73```\nPerform basic arithmetic operations', inline=False)
 
     await context.send(embed=embed)
 
