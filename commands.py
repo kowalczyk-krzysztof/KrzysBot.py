@@ -148,13 +148,13 @@ async def _quote(context, *author):
 #         await context.send(f'**Result:** ```{result}```')
 
 
-# Simple calculator. First whitespaces are removed and the result is assigned to variable "equation". This is done so input like "2+2 - 2" becomes "2+2-2".
+# Command below uses simpleeval (https://github.com/danthedeckie/simpleeval). Although it seems safe, there's always risk, just like with any form of eval(), although it uses ast.literal_eval
+# Simple calculator. First whitespaces are removed from user_input and the result is assigned to variable "initial_equation". This is done so input like "2+2 - 2" becomes "2+2-2".
+# Then "^" in initial_equation is replaced with "**" and "," is replaced with ".'. The result is assigned to variable equation. This is done because most Discord users are used to using "^" for power but Python uses "**" and some users prefer to use "," for decimals.
 # Then check if equation has any valid_operators (this takes care of empty check too).
 # Then check if any of valid_operators is last index of equation (to prevent doing something like ".calc 2+").
 # Then check if equation has any letters (by checking if there's any uppercase or lowercase in it).
-# Then check if equation has "," (some users like to use "," instead of ".")
 # If any of above checks fails, return a msg "Invalid input".
-# Else check for "^" symbol in equation (often people use "^" for power but in Python you need to use "**" so I had to make a check for that). if true, return msg "Syntax Error"
 # Then pass equation to simple_eval function - this is similar to .eval() but it doesn't have any of the risks eval has.
 # Assign the result of simple_eval as a float to variable result.
 # If result is an integer, then return it as an integer, so I don't send values like "4.0" to the user.
@@ -162,9 +162,11 @@ async def _quote(context, *author):
 @bot.command()
 async def calc(context, *user_input):
 
-    equation: str = " ".join(user_input)
+    initial_equation: str = " ".join(user_input)
+    # IMPORTANT: strings are not mutable so you have to assign the .replace result to a variable
+    equation = initial_equation.replace('^', "**").replace(",", ".")
 
-    valid_operators: list = ["+", "-", "/", "*", "%", "**"]
+    valid_operators: list = ["+", "-", "/", "*", "%", "^"]
     # operator_check is how I check if a string contains any element from a list, it will also return false if the iterable is empty, so this covers empty check too
     operator_check: bool = any(
         operator in equation for operator in valid_operators)
@@ -175,17 +177,12 @@ async def calc(context, *user_input):
             if operator == equation[-1]:
                 return True
 
-    if not operator_check or last_element(equation) or equation.isupper() or equation.islower() or ',' in equation:
+    if not operator_check or last_element(equation) or equation.isupper() or equation.islower():
         return await context.send("Invalid input")
 
-    elif "^" in equation:
-        valid_power_symbol = '**'
-        invalid_power_symbol = '^'
-        return await context.send(f'**Syntax error**: To use power, use **{valid_power_symbol}**  instead of **{invalid_power_symbol}**')
-
+    result: float = float(simple_eval(equation))
+    # returning initial_equation here so user sees "^" instead of "**"
+    if result.is_integer():
+        await context.send(f'**Input:** ```fix\n{initial_equation}```**Result:** ```fix\n{int(result)}```')
     else:
-        result: float = float(simple_eval(equation))
-        if result.is_integer():
-            await context.send(f'**Input:** ```fix\n{equation}```**Result:** ```fix\n{int(result)}```')
-        else:
-            await context.send(f'**Input:** ```fix\n{equation}```**Result:** ```fix\n{result}```')
+        await context.send(f'**Input:** ```fix\n{initial_equation}```**Result:** ```fix\n{result}```')
