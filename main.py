@@ -8,7 +8,7 @@ from commands import bot
 import error_handler
 
 load_dotenv(dotenv_path='config.env')
-AUTH_TOKEN = os.environ.get('AUTH_TOKEN')
+AUTH_TOKEN: str = os.environ.get('AUTH_TOKEN')
 
 # Connecting
 

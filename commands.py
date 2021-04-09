@@ -8,49 +8,50 @@ import random
 # Quotes
 from quote import quote
 # Utils
-from utils import empty_check, string_stripper
+from utils import empty_check, string_stripper, create_command_list, background
 # Simpleeval - safe eval(), need it for my calculator
 from simpleeval import simple_eval
 
-# Bot variables
 bot = commands.Bot(command_prefix='.', help_command=None)
-background = Colour.dark_gold()
+
 
 # List of commands
+
+class BotCommand:
+    def __init__(self, command_name: str, example_input: str, command_desc: str):
+        self.command_name = command_name
+        self.example_input = example_input
+        self.command_desc = command_desc
+
+
+__compatibility = BotCommand(
+    'compatibility', 'Romeo Juliet', 'Check how compatibile two users are')
+__quote = BotCommand('quote', 'Albert Einstein',
+                     'Get a random quote from author of your choice')
+__temple = BotCommand('temple', 'zezima', 'Get a link to TempleOSRS profile')
+__calc = BotCommand('calc', '(10*5) + 73',
+                    'Perform basic arithmetic operations')
 
 
 @bot.command(aliases=['commands', 'help'])
 async def _commands(context):
-
-    embed = Embed(
-        title="Command List",
-        colour=background
-    )
-    embed.add_field(name='.compatibility',
-                    value='Example: ```.compatibility Romeo Juliet```\nCheck how compatibile two users are', inline=False)
-    embed.add_field(name='.quote',
-                    value='Example: ```.quote Albert Einstein```\nGet a random quote from author of your choice', inline=False)
-    embed.add_field(name='.temple',
-                    value='Example: ```.temple zezima```\nGet a link to TempleOSRS profile', inline=False)
-    embed.add_field(name='.calc',
-                    value='Example: ```.calc (10*5) + 73```\nPerform basic arithmetic operations', inline=False)
-
+    embed = create_command_list(__compatibility, __quote, __temple, __calc)
     await context.send(embed=embed)
 
 # User compatibility
 
 
 @bot.command()
-async def compatibility(context, name1, name2):
+async def compatibility(context, name1: str, name2: str):
 
-    n = random.randint(0, 100)
+    n: int = random.randint(0, 100)
     await context.send(f'{name1} is {n}% compatible with {name2}')
 
 # Link to TempleOSRS profile
 
 
 @bot.command()
-async def temple(context, value):
+async def temple(context, value: str):
     await context.send(f'https://templeosrs.com/player/overview.php?player={value}')
 
 # Get a random quote using quote pip library.
@@ -69,23 +70,23 @@ async def temple(context, value):
 # *author is how I spread arguments in Python
 async def _quote(context, *author):
     # " ".join is how I join items in a list
-    search_term = " ".join(author)
+    search_term: str = " ".join(author)
     # Empty string check
     if empty_check(search_term):
         return await context.send('Please provide an author')
 
     # Result is a list of dictionaries with keys "author", "book", "quote"
-    result = quote(search_term)
+    result: list or None = quote(search_term)
 
     if result == None:
         await context.send(f'Author with name **{search_term}** not found')
     else:
         # INDEXES HAS TO BE OUTSIDE THE LOOP!!!!
-        indexes = []
-        stripped_search_term = string_stripper(search_term)
+        indexes: list = []
+        stripped_search_term: str = string_stripper(search_term)
         for dict_item in result:
 
-            stripped_authors = string_stripper(dict_item["author"])
+            stripped_authors: str = string_stripper(dict_item["author"])
 
             if stripped_search_term in stripped_authors:
                 indexes.append(result.index(dict_item))
@@ -93,7 +94,7 @@ async def _quote(context, *author):
         if len(indexes) == 0:
             await context.send(f'Author with name **{search_term}** not found')
         else:
-            random_quote = random.choice(indexes)
+            random_quote: int = random.choice(indexes)
 
             embed = Embed(
                 title="Random Quote",
@@ -161,11 +162,12 @@ async def _quote(context, *author):
 @bot.command()
 async def calc(context, *user_input):
 
-    equation = " ".join(user_input)
+    equation: str = " ".join(user_input)
 
-    valid_operators = ["+", "-", "/", "*", "%", "**"]
+    valid_operators: list = ["+", "-", "/", "*", "%", "**"]
     # operator_check is how I check if a string contains any element from a list, it will also return false if the iterable is empty, so this covers empty check too
-    operator_check = any(operator in equation for operator in valid_operators)
+    operator_check: bool = any(
+        operator in equation for operator in valid_operators)
     # checks if arithmetic operator is last element in equation, to prevent doing something like ".calc 2+"
 
     def last_element(equation: str):
@@ -182,7 +184,7 @@ async def calc(context, *user_input):
         return await context.send(f'**Syntax error**: To use power, use **{valid_power_symbol}**  instead of **{invalid_power_symbol}**')
 
     else:
-        result = float(simple_eval(equation))
+        result: float = float(simple_eval(equation))
         if result.is_integer():
             await context.send(f'**Input:** ```fix\n{equation}```**Result:** ```fix\n{int(result)}```')
         else:
