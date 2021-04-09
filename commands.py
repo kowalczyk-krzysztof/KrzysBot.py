@@ -137,10 +137,14 @@ async def _quote(context, *author):
 #         await context.send(f'**Result:** ```{result}```')
 
 
-# Simple calculator. First whitespaces are removed, then a check is performed if user_input has any letters in it (if True, return a msg), then a check for "^" symbol is performed - often people use ^ for power but in Python you need to use ** so I had to make a check for that. Now, I don't want to return results like "4.0" so I'm checking whether result is an integer or not and sending a message based on that.
+# Simple calculator. First whitespaces are removed, then a check is performed if user_input is empty then if it has any letters in it (if True, return a msg), then a check for "^" symbol is performed - often people use ^ for power but in Python you need to use ** so I had to make a check for that. Now, I don't want to return results like "4.0" so I'm checking whether result is an integer or not and sending a message based on that.
 @bot.command()
 async def calc(context, *user_input):
+
     equation = " ".join(user_input)
+
+    if equation == "":
+        return await context.send("You can't calculate nothing")
 
     valid_power_symbol = '**'
     invalid_power_symbol = '^'
@@ -153,8 +157,7 @@ async def calc(context, *user_input):
 
     else:
         result = float(simple_eval(equation))
-
         if result.is_integer():
-            await context.send(f'**Result:** ```{int(result)}```')
+            await context.send(f'**Input**: ```{equation}```**Result:** ```{int(result)}```')
         else:
-            await context.send(f'**Result:** ```{result}```')
+            await context.send(f'**Input**: ```{equation}```**Result:** ```{result}```')
