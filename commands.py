@@ -116,7 +116,7 @@ async def _quote(context, *author):
 # Simple calculator. First whitespaces are removed from user_input and the result is assigned to variable initial_equation. This is done so input like "2+2 - 2" becomes "2+2-2".
 # Then "^" in initial_equation is replaced with "**" and "," is replaced with ".'. The result is assigned to variable equation. This is done because most Discord users are used to using "^" for power but Python uses "**" and some users prefer to use "," for decimals.
 # Then check if equation has any valid_operators (this takes care of empty check too).
-# Then check if any of valid_operators is last index of equation (to prevent doing something like ".calc 2+").
+# Then check if any of valid_operators is last or first index (with exception for "-" to allow negative numbers) of equation (to prevent doing something like ".calc 2+" or ".calc +2").
 # Then check if equation has any letters (by checking if there's any uppercase or lowercase in it).
 # If any of above checks fails, return a msg "Invalid input".
 # Then pass equation to simple_eval function - this is similar to .eval() but it doesn't have any of the risks eval has.
@@ -138,12 +138,17 @@ async def calc(context, *user_input):
         operator in equation for operator in valid_operators)
     # checks if arithmetic operator is last element in equation, to prevent doing something like ".calc 2+"
 
-    def last_element(equation: str):
+    def is_last_or_first(equation: str):
         for operator in valid_operators:
             if operator == equation[-1]:
                 return True
+            elif operator == equation[0]:
+                if operator == "-":
+                    return False
+                else:
+                    return True
 
-    if not operator_check or last_element(equation) or equation.isupper() or equation.islower():
+    if not operator_check or is_last_or_first(equation) or equation.isupper() or equation.islower():
         return await context.send("Invalid input")
 
     result: float = float(simple_eval(equation))
