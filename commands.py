@@ -78,8 +78,11 @@ async def _quote(context, *author):
     # Result is a list of dictionaries with keys "author", "book", "quote"
     result: list or None = quote(search_term)
 
+    async def author_not_found(author: str):
+        await context.send(f'Author with name **{author}** not found')
+
     if result == None:
-        await context.send(f'Author with name **{search_term}** not found')
+        await author_not_found(search_term)
     else:
         # INDEXES HAS TO BE OUTSIDE THE LOOP!!!!
         indexes: list = []
@@ -92,7 +95,7 @@ async def _quote(context, *author):
                 indexes.append(result.index(dict_item))
 
         if len(indexes) == 0:
-            await context.send(f'Author with name **{search_term}** not found')
+            await author_not_found(search_term)
         else:
             random_quote: int = random.choice(indexes)
 
@@ -108,48 +111,9 @@ async def _quote(context, *author):
 
             await context.send(embed=embed)
 
-# Simple calculator, equation is a string like "2+2". Now I don't really know how to handle parsing something like "2+2-3" so I'm just returning a message if that happens. One solution could be to use eval() but eval = evil so I should avoid using it. EDIT: Turns out simpleeval library exists and does exactly what I want. Leaving the old code below for future if so I can laugh at myself.
-# @bot.command()
-# async def calc(context, equation):
-
-#     async def equation_splitter(equation, operator):
-#         y = equation.split(operator)
-#         if len(y) > 2 or y[1].isnumeric() == False:
-#             return await context.send("Fuck off this is a simple calculator")
-#         else:
-#             return y
-
-#     if equation.isupper() or equation.islower():
-#         return await context.send("Invalid input")
-#     elif '+' in equation:
-#         y = await equation_splitter(equation, '+')
-#         result = float(y[0]) + float(y[1])
-#     elif '-' in equation:
-#         y = await equation_splitter(equation, '-')
-#         result = float(y[0]) - float(y[1])
-#     elif '*' in equation:
-#         y = await equation_splitter(equation, '*')
-#         result = float(y[0]) * float(y[1])
-#     elif '/' in equation:
-#         y = await equation_splitter(equation, '/')
-#         if y[1] == '0':
-#             return await context.send("You can't divide by 0")
-#         else:
-#             result = float(y[0]) / float(y[1])
-#     elif '^' in equation:
-#         y = await equation_splitter(equation, '^')
-#         result = float(y[0])**float(y[1])
-#     else:
-#         return await context.send("Invalid input")
-
-#     if result.is_integer():
-#         await context.send(f'**Result:** ```{int(result)}```')
-#     else:
-#         await context.send(f'**Result:** ```{result}```')
-
-
-# Command below uses simpleeval (https://github.com/danthedeckie/simpleeval). Although it seems safe, there's always risk, just like with any form of eval(), although it uses ast.literal_eval
-# Simple calculator. First whitespaces are removed from user_input and the result is assigned to variable "initial_equation". This is done so input like "2+2 - 2" becomes "2+2-2".
+# Command below uses simpleeval (https://github.com/danthedeckie/simpleeval). Although it seems safe, there's always a risk, just like with any form of eval(), although it uses ast.literal_eval
+# Example user_input: ".calc (2+10) * 5 + 6"
+# Simple calculator. First whitespaces are removed from user_input and the result is assigned to variable initial_equation. This is done so input like "2+2 - 2" becomes "2+2-2".
 # Then "^" in initial_equation is replaced with "**" and "," is replaced with ".'. The result is assigned to variable equation. This is done because most Discord users are used to using "^" for power but Python uses "**" and some users prefer to use "," for decimals.
 # Then check if equation has any valid_operators (this takes care of empty check too).
 # Then check if any of valid_operators is last index of equation (to prevent doing something like ".calc 2+").
@@ -159,6 +123,8 @@ async def _quote(context, *author):
 # Assign the result of simple_eval as a float to variable result.
 # If result is an integer, then return it as an integer, so I don't send values like "4.0" to the user.
 # If result is a float then just send it as it is.
+
+
 @bot.command()
 async def calc(context, *user_input):
 
@@ -182,7 +148,11 @@ async def calc(context, *user_input):
 
     result: float = float(simple_eval(equation))
     # returning initial_equation here so user sees "^" instead of "**"
-    if result.is_integer():
-        await context.send(f'**Input:** ```fix\n{initial_equation}```**Result:** ```fix\n{int(result)}```')
-    else:
+
+    async def result_generator(result: int or float):
         await context.send(f'**Input:** ```fix\n{initial_equation}```**Result:** ```fix\n{result}```')
+
+    if result.is_integer():
+        await result_generator(int(result))
+    else:
+        await result_generator(result)
